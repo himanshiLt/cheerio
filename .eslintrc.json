@@ -42,6 +42,7 @@
     "no-unused-expressions": 2,
     "no-useless-call": 2,
     "no-use-before-define": [2, "nofunc"],
+    "no-constant-binary-expression": 2,
     "no-void": 2,
 
     "jsdoc/require-jsdoc": 0,
@@ -60,7 +61,8 @@
     "jsdoc/tag-lines": 0,
 
     "node/no-unsupported-features/es-syntax": 0,
-    "node/no-missing-import": [2, { "tryExtensions": [".js", ".json", ".ts"] }]
+    "node/file-extension-in-import": ["error", "always"],
+    "node/no-missing-import": 0
   },
   "settings": {
     "jsdoc": {
@@ -83,6 +85,9 @@
         "project": "./tsconfig.eslint.json"
       },
       "rules": {
+        "dot-notation": 0,
+        "curly": [2, "multi-line"],
+
         "@typescript-eslint/prefer-for-of": 0,
         "@typescript-eslint/member-ordering": 0,
         "@typescript-eslint/explicit-function-return-type": 0,

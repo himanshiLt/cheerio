@@ -2,9 +2,10 @@ import fs from 'fs';
 import path from 'path';
 
 import { Suite, Event } from 'benchmark';
+// @ts-expect-error `jsdom` types currently collide with `parse5` types.
 import { JSDOM } from 'jsdom';
 import { Script } from 'vm';
-import cheerio from '../src';
+import cheerio from '../lib/index.js';
 
 const documentDir = path.join(__dirname, 'documents');
 const jQuerySrc = fs.readFileSync(

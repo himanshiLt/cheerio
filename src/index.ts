@@ -3,37 +3,37 @@
  *
  * @category Cheerio
  */
-export type { Cheerio } from './cheerio';
+export type { Cheerio } from './cheerio.js';
 
 /**
  * Types used in signatures of Cheerio methods.
  *
  * @category Cheerio
  */
-export * from './types';
+export * from './types.js';
 export type {
   CheerioOptions,
   HTMLParser2Options,
   Parse5Options,
-} from './options';
+} from './options.js';
 /**
  * Re-exporting all of the node types.
  *
  * @category DOM Node
  */
-export type { Node, NodeWithChildren, Element, Document } from 'domhandler';
+export type { Node, AnyNode, ParentNode, Element, Document } from 'domhandler';
 
-export type { CheerioAPI } from './load';
-import { getLoad } from './load';
-import { getParse } from './parse';
-import { renderWithParse5, parseWithParse5 } from './parsers/parse5-adapter';
+export type { CheerioAPI } from './load.js';
+import { getLoad } from './load.js';
+import { getParse } from './parse.js';
+import { renderWithParse5, parseWithParse5 } from './parsers/parse5-adapter.js';
 import renderWithHtmlparser2 from 'dom-serializer';
 import { parseDocument as parseWithHtmlparser2 } from 'htmlparser2';
 
-const parse = getParse((content, options, isDocument) =>
+const parse = getParse((content, options, isDocument, context) =>
   options.xmlMode || options._useHtmlParser2
     ? parseWithHtmlparser2(content, options)
-    : parseWithParse5(content, options, isDocument)
+    : parseWithParse5(content, options, isDocument, context)
 );
 
 // Duplicate docs due to https://github.com/TypeStrong/typedoc/issues/1616
@@ -63,27 +63,9 @@ export const load = getLoad(parse, (dom, options) =>
  */
 export default load([]);
 
-import { filters, pseudos, aliases } from 'cheerio-select';
+export { html, xml, text } from './static.js';
 
-/**
- * Extension points for adding custom pseudo selectors.
- *
- * @example <caption>Adds a custom pseudo selector `:classic`, which matches
- * some fun HTML elements that are no more.</caption>
- *
- * ```js
- * import { load, select } from 'cheerio';
- *
- * // Aliases are short hands for longer HTML selectors
- * select.aliases.classic = 'marquee,blink';
- *
- * const $ = load(doc);
- * $(':classic').html();
- * ```
- */
-export const select = { filters, pseudos, aliases };
-
-import * as staticMethods from './static';
+import * as staticMethods from './static.js';
 
 /**
  * In order to promote consistency with the jQuery library, users are encouraged

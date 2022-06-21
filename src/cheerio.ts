@@ -1,12 +1,12 @@
-import { InternalOptions } from './options';
-import type { Node, Document } from 'domhandler';
-import { BasicAcceptedElems } from './types';
+import type { InternalOptions } from './options.js';
+import type { AnyNode, Document, ParentNode } from 'domhandler';
+import type { BasicAcceptedElems } from './types.js';
 
-import * as Attributes from './api/attributes';
-import * as Traversing from './api/traversing';
-import * as Manipulation from './api/manipulation';
-import * as Css from './api/css';
-import * as Forms from './api/forms';
+import * as Attributes from './api/attributes.js';
+import * as Traversing from './api/traversing.js';
+import * as Manipulation from './api/manipulation.js';
+import * as Css from './api/css.js';
+import * as Forms from './api/forms.js';
 
 type AttributesType = typeof Attributes;
 type TraversingType = typeof Traversing;
@@ -28,7 +28,7 @@ export abstract class Cheerio<T> implements ArrayLike<T> {
 
   /**
    * Instance of cheerio. Methods are specified in the modules. Usage of this
-   * constructor is not recommended. Please use $.load instead.
+   * constructor is not recommended. Please use `$.load` instead.
    *
    * @private
    * @param elements - The new selection.
@@ -62,7 +62,7 @@ export abstract class Cheerio<T> implements ArrayLike<T> {
    */
   abstract _make<T>(
     dom: ArrayLike<T> | T | string,
-    context?: BasicAcceptedElems<Node>
+    context?: BasicAcceptedElems<AnyNode>
   ): Cheerio<T>;
 
   /**
@@ -75,9 +75,10 @@ export abstract class Cheerio<T> implements ArrayLike<T> {
    * @returns A document containing the `content`.
    */
   abstract _parse(
-    content: string | Document | Node | Node[] | Buffer,
+    content: string | Document | AnyNode | AnyNode[] | Buffer,
     options: InternalOptions,
-    isDocument: boolean
+    isDocument: boolean,
+    context: ParentNode | null
   ): Document;
 
   /**
@@ -87,7 +88,7 @@ export abstract class Cheerio<T> implements ArrayLike<T> {
    * @param dom - DOM to render.
    * @returns The rendered DOM.
    */
-  abstract _render(dom: Node | ArrayLike<Node>): string;
+  abstract _render(dom: AnyNode | ArrayLike<AnyNode>): string;
 }
 
 export interface Cheerio<T>

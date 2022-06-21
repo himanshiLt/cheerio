@@ -1,5 +1,5 @@
 import cheerio from '..';
-import type { Cheerio } from '../cheerio';
+import type { Cheerio } from '../cheerio.js';
 import type { Element } from 'domhandler';
 import {
   script,
@@ -9,7 +9,7 @@ import {
   chocolates,
   inputs,
   mixedText,
-} from '../__fixtures__/fixtures';
+} from '../__fixtures__/fixtures.js';
 
 describe('$(...)', () => {
   let $: typeof cheerio;
@@ -21,7 +21,7 @@ describe('$(...)', () => {
   describe('.attr', () => {
     it('() : should get all the attributes', () => {
       const attrs = $('ul').attr();
-      expect(attrs.id).toBe('fruits');
+      expect(attrs).toHaveProperty('id', 'fruits');
     });
 
     it('(invalid key) : invalid attr should get undefined', () => {
@@ -51,9 +51,9 @@ describe('$(...)', () => {
         'pear'
       ) as Cheerio<Element>;
 
-      expect($el[0].attribs.class).toBe('pear');
+      expect($el[0].attribs).toHaveProperty('class', 'pear');
       expect($el[1].attribs).toBeUndefined();
-      expect($el[2].attribs.class).toBe('pear');
+      expect($el[2].attribs).toHaveProperty('class', 'pear');
     });
 
     it('(key, value) : should return an empty object for an empty object', () => {
@@ -69,9 +69,9 @@ describe('$(...)', () => {
         'data-url': 'http://apple.com',
       });
       const attrs = $('.apple').attr();
-      expect(attrs.id).toBe('apple');
-      expect(attrs.style).toBe('color:red;');
-      expect(attrs['data-url']).toBe('http://apple.com');
+      expect(attrs).toHaveProperty('id', 'apple');
+      expect(attrs).toHaveProperty('style', 'color:red;');
+      expect(attrs).toHaveProperty('data-url', 'http://apple.com');
     });
 
     it('(map, val) : should throw with wrong combination of arguments', () => {
@@ -95,7 +95,7 @@ describe('$(...)', () => {
         return 'ninja';
       });
       const attrs = $fruits.attr();
-      expect(attrs.id).toBe('ninja');
+      expect(attrs).toHaveProperty('id', 'ninja');
     });
 
     it('(key, function) : should ignore text nodes', () => {
@@ -204,11 +204,18 @@ describe('$(...)', () => {
     it('(valid key) : valid prop should get value', () => {
       expect(checkbox.prop('checked')).toBe(true);
       checkbox.css('display', 'none');
-      expect(checkbox.prop('style').display).toBe('none');
+      expect(checkbox.prop('style')).toHaveProperty('display', 'none');
       expect(checkbox.prop('style')).toHaveLength(1);
       expect(checkbox.prop('style')).toContain('display');
       expect(checkbox.prop('tagName')).toBe('INPUT');
       expect(checkbox.prop('nodeName')).toBe('INPUT');
+    });
+
+    it('(valid key) : should return on empty collection', () => {
+      expect($(undefined).prop('checked')).toBeUndefined();
+      expect($(undefined).prop('style')).toBeUndefined();
+      expect($(undefined).prop('tagName')).toBeUndefined();
+      expect($(undefined).prop('nodeName')).toBeUndefined();
     });
 
     it('(invalid key) : invalid prop should get undefined', () => {
@@ -243,6 +250,13 @@ describe('$(...)', () => {
       expect(imgs.prop('namespace')).toBe(nsHtml);
       imgs.prop('attribs', null);
       expect(imgs.prop('src')).toBeUndefined();
+      expect(imgs.prop('data-foo')).toBeUndefined();
+    });
+
+    it('(key, value) : should ignore empty collection', () => {
+      expect($(undefined).prop('checked')).toBeUndefined();
+      $(undefined).prop('checked', true);
+      expect($(undefined).prop('checked')).toBeUndefined();
     });
 
     it('(map) : object map should set multiple props', () => {
@@ -284,17 +298,63 @@ describe('$(...)', () => {
       expect($(null as any).prop('prop')).toBeUndefined();
     });
 
+    it('("href") : should resolve links with `baseURI`', () => {
+      const $ = cheerio.load(
+        `
+          <a id="1" href="http://example.org">example1</a>
+          <a id="2" href="//example.org">example2</a>
+          <a id="3" href="/example.org">example3</a>
+          <a id="4" href="example.org">example4</a>
+        `,
+        { baseURI: 'http://example.com/page/1' }
+      );
+
+      expect($('#1').prop('href')).toBe('http://example.org/');
+      expect($('#2').prop('href')).toBe('http://example.org/');
+      expect($('#3').prop('href')).toBe('http://example.com/example.org');
+      expect($('#4').prop('href')).toBe('http://example.com/page/example.org');
+
+      expect($(undefined).prop('href')).toBeUndefined();
+    });
+
+    it('("src") : should resolve links with `baseURI`', () => {
+      const $ = cheerio.load(
+        `
+          <img id="1" src="http://example.org/image.png">
+          <iframe id="2" src="//example.org/page.html"></iframe>
+          <audio id="3" src="/example.org/song.mp3"></audio>
+          <source id="4" src="example.org/image.png">
+        `,
+        { baseURI: 'http://example.com/page/1' }
+      );
+
+      expect($('#1').prop('src')).toBe('http://example.org/image.png');
+      expect($('#2').prop('src')).toBe('http://example.org/page.html');
+      expect($('#3').prop('src')).toBe(
+        'http://example.com/example.org/song.mp3'
+      );
+      expect($('#4').prop('src')).toBe(
+        'http://example.com/page/example.org/image.png'
+      );
+
+      expect($(undefined).prop('src')).toBeUndefined();
+    });
+
     it('("outerHTML") : should render properly', () => {
       const outerHtml = '<div><a></a></div>';
       const $a = $(outerHtml);
 
       expect($a.prop('outerHTML')).toBe(outerHtml);
+
+      expect($(undefined).prop('outerHTML')).toBeUndefined();
     });
 
     it('("innerHTML") : should render properly', () => {
       const $a = $('<div><a></a></div>');
 
       expect($a.prop('innerHTML')).toBe('<a></a>');
+
+      expect($(undefined).prop('innerHTML')).toBeUndefined();
     });
 
     it('("textContent") : should render properly', () => {
@@ -303,6 +363,21 @@ describe('$(...)', () => {
       );
 
       expect($(script).prop('textContent')).toBe('A  var foo = "bar";B');
+
+      expect($(undefined).prop('textContent')).toBeUndefined();
+    });
+
+    it('("textContent") : should include style and script tags', () => {
+      const $ = cheerio.load(
+        '<body>Welcome <div>Hello, testing text function,<script>console.log("hello")</script></div><style type="text/css">.cf-hidden { display: none; }</style>End of message</body>'
+      );
+      expect($('body').prop('textContent')).toBe(
+        'Welcome Hello, testing text function,console.log("hello").cf-hidden { display: none; }End of message'
+      );
+      expect($('style').prop('textContent')).toBe(
+        '.cf-hidden { display: none; }'
+      );
+      expect($('script').prop('textContent')).toBe('console.log("hello")');
     });
 
     it('("innerText") : should render properly', () => {
@@ -311,6 +386,19 @@ describe('$(...)', () => {
       );
 
       expect($(script).prop('innerText')).toBe('AB');
+
+      expect($(undefined).prop('innerText')).toBeUndefined();
+    });
+
+    it('("innerText") : should omit style and script tags', () => {
+      const $ = cheerio.load(
+        '<body>Welcome <div>Hello, testing text function,<script>console.log("hello")</script></div><style type="text/css">.cf-hidden { display: none; }</style>End of message</body>'
+      );
+      expect($('body').prop('innerText')).toBe(
+        'Welcome Hello, testing text function,End of message'
+      );
+      expect($('style').prop('innerText')).toBe('');
+      expect($('script').prop('innerText')).toBe('');
     });
 
     it('(inherited properties) : prop should support inherited properties', () => {

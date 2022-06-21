@@ -1,13 +1,13 @@
-import { BasicAcceptedElems } from './types';
+import type { BasicAcceptedElems } from './types.js';
 import type { CheerioAPI, Cheerio } from '.';
-import { Node, Document, isText, hasChildren } from 'domhandler';
+import type { AnyNode, Document } from 'domhandler';
+import { textContent } from 'domutils';
 import {
   InternalOptions,
   CheerioOptions,
   default as defaultOptions,
   flatten as flattenOptions,
-} from './options';
-import { ElementType } from 'htmlparser2';
+} from './options.js';
 
 /**
  * Helper function to render a DOM.
@@ -19,7 +19,7 @@ import { ElementType } from 'htmlparser2';
  */
 function render(
   that: CheerioAPI,
-  dom: BasicAcceptedElems<Node> | undefined,
+  dom: BasicAcceptedElems<AnyNode> | undefined,
   options: InternalOptions
 ): string {
   if (!that) return '';
@@ -34,7 +34,7 @@ function render(
  * @returns Whether the object is an options object.
  */
 function isOptions(
-  dom?: BasicAcceptedElems<Node> | CheerioOptions | null,
+  dom?: BasicAcceptedElems<AnyNode> | CheerioOptions | null,
   options?: CheerioOptions
 ): dom is CheerioOptions {
   return (
@@ -62,12 +62,12 @@ export function html(this: CheerioAPI, options?: CheerioOptions): string;
  */
 export function html(
   this: CheerioAPI,
-  dom?: BasicAcceptedElems<Node>,
+  dom?: BasicAcceptedElems<AnyNode>,
   options?: CheerioOptions
 ): string;
 export function html(
   this: CheerioAPI,
-  dom?: BasicAcceptedElems<Node> | CheerioOptions,
+  dom?: BasicAcceptedElems<AnyNode> | CheerioOptions,
   options?: CheerioOptions
 ): string {
   /*
@@ -97,7 +97,10 @@ export function html(
  * @param dom - Element to render.
  * @returns THe rendered document.
  */
-export function xml(this: CheerioAPI, dom?: BasicAcceptedElems<Node>): string {
+export function xml(
+  this: CheerioAPI,
+  dom?: BasicAcceptedElems<AnyNode>
+): string {
   const options = { ...this._options, xmlMode: true };
 
   return render(this, dom, options);
@@ -106,28 +109,23 @@ export function xml(this: CheerioAPI, dom?: BasicAcceptedElems<Node>): string {
 /**
  * Render the document as text.
  *
+ * This returns the `textContent` of the passed elements. The result will
+ * include the contents of `script` and `stype` elements. To avoid this, use
+ * `.prop('innerText')` instead.
+ *
  * @param elements - Elements to render.
  * @returns The rendered document.
  */
 export function text(
   this: CheerioAPI | void,
-  elements?: ArrayLike<Node>
+  elements?: ArrayLike<AnyNode>
 ): string {
   const elems = elements ? elements : this ? this.root() : [];
 
   let ret = '';
 
   for (let i = 0; i < elems.length; i++) {
-    const elem = elems[i];
-    if (isText(elem)) ret += elem.data;
-    else if (
-      hasChildren(elem) &&
-      elem.type !== ElementType.Comment &&
-      elem.type !== ElementType.Script &&
-      elem.type !== ElementType.Style
-    ) {
-      ret += text(elem.children);
-    }
+    ret += textContent(elems[i]);
   }
 
   return ret;
@@ -150,14 +148,14 @@ export function parseHTML(
   data: string,
   context?: unknown | boolean,
   keepScripts?: boolean
-): Node[];
+): AnyNode[];
 export function parseHTML(this: CheerioAPI, data?: '' | null): null;
 export function parseHTML(
   this: CheerioAPI,
   data?: string | null,
   context?: unknown | boolean,
   keepScripts = typeof context === 'boolean' ? context : false
-): Node[] | null {
+): AnyNode[] | null {
   if (!data || typeof data !== 'string') {
     return null;
   }
@@ -209,7 +207,7 @@ export function root(this: CheerioAPI): Cheerio<Document> {
  * @alias Cheerio.contains
  * @see {@link https://api.jquery.com/jQuery.contains/}
  */
-export function contains(container: Node, contained: Node): boolean {
+export function contains(container: AnyNode, contained: AnyNode): boolean {
   // According to the jQuery API, an element does not "contain" itself
   if (contained === container) {
     return false;
@@ -219,7 +217,7 @@ export function contains(container: Node, contained: Node): boolean {
    * Step up the descendants, stopping when the root element is reached
    * (signaled by `.parent` returning a reference to the same object)
    */
-  let next: Node | null = contained;
+  let next: AnyNode | null = contained;
   while (next && next !== next.parent) {
     next = next.parent;
     if (next === container) {
@@ -262,6 +260,8 @@ export function merge<T>(
 }
 
 /**
+ * Checks if an object is array-like.
+ *
  * @param item - Item to check.
  * @returns Indicates if the item is array-like.
  */

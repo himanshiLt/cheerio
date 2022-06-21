@@ -1,19 +1,19 @@
-import { domEach, isTag } from '../utils';
-import type { Element, Node } from 'domhandler';
-import type { Cheerio } from '../cheerio';
+import { domEach, isTag } from '../utils.js';
+import type { Element, AnyNode } from 'domhandler';
+import type { Cheerio } from '../cheerio.js';
 
 /**
  * Get the value of a style property for the first element in the set of matched elements.
  *
  * @category CSS
- * @param names - Optionally the names of the property of interest.
+ * @param names - Optionally the names of the properties of interest.
  * @returns A map of all of the style properties.
  * @see {@link https://api.jquery.com/css/}
  */
-export function css<T extends Node>(
+export function css<T extends AnyNode>(
   this: Cheerio<T>,
   names?: string[]
-): Record<string, string>;
+): Record<string, string> | undefined;
 /**
  * Get the value of a style property for the first element in the set of matched elements.
  *
@@ -22,7 +22,7 @@ export function css<T extends Node>(
  * @returns The property value for the given name.
  * @see {@link https://api.jquery.com/css/}
  */
-export function css<T extends Node>(
+export function css<T extends AnyNode>(
   this: Cheerio<T>,
   name: string
 ): string | undefined;
@@ -35,7 +35,7 @@ export function css<T extends Node>(
  * @returns The instance itself.
  * @see {@link https://api.jquery.com/css/}
  */
-export function css<T extends Node>(
+export function css<T extends AnyNode>(
   this: Cheerio<T>,
   prop: string,
   val:
@@ -46,16 +46,24 @@ export function css<T extends Node>(
  * Set multiple CSS properties for every matched element.
  *
  * @category CSS
- * @param prop - The name of the property.
- * @param val - The new value.
+ * @param map - A map of property names and values.
  * @returns The instance itself.
  * @see {@link https://api.jquery.com/css/}
  */
-export function css<T extends Node>(
+export function css<T extends AnyNode>(
   this: Cheerio<T>,
-  prop: Record<string, string>
+  map: Record<string, string>
 ): Cheerio<T>;
-export function css<T extends Node>(
+/**
+ * Set multiple CSS properties for every matched element.
+ *
+ * @category CSS
+ * @param prop - The names of the properties.
+ * @param val - The new values.
+ * @returns The instance itself.
+ * @see {@link https://api.jquery.com/css/}
+ */
+export function css<T extends AnyNode>(
   this: Cheerio<T>,
   prop?: string | string[] | Record<string, string>,
   val?:
@@ -73,6 +81,10 @@ export function css<T extends Node>(
         setCss(el, prop as string, val, i);
       }
     });
+  }
+
+  if (this.length === 0) {
+    return undefined;
   }
 
   return getCss(this[0], prop as string);
@@ -108,7 +120,7 @@ function setCss(
       styles[prop] = val;
     }
 
-    el.attribs.style = stringify(styles);
+    el.attribs['style'] = stringify(styles);
   } else if (typeof prop === 'object') {
     Object.keys(prop).forEach((k, i) => {
       setCss(el, k, prop[k], i);
@@ -125,7 +137,7 @@ function setCss(
  * @param props - Optionally the names of the properties of interest.
  * @returns The parsed styles.
  */
-function getCss(el?: Node, props?: string[]): Record<string, string>;
+function getCss(el: AnyNode, props?: string[]): Record<string, string>;
 /**
  * Get a property from the parsed styles of the first element.
  *
@@ -135,14 +147,14 @@ function getCss(el?: Node, props?: string[]): Record<string, string>;
  * @param prop - Name of the prop.
  * @returns The value of the property.
  */
-function getCss(el: Node, prop: string): string | undefined;
+function getCss(el: AnyNode, prop: string): string | undefined;
 function getCss(
-  el?: Node,
+  el: AnyNode,
   prop?: string | string[]
 ): Record<string, string> | string | undefined {
   if (!el || !isTag(el)) return;
 
-  const styles = parse(el.attribs.style);
+  const styles = parse(el.attribs['style']);
   if (typeof prop === 'string') {
     return styles[prop];
   }
@@ -186,11 +198,23 @@ function parse(styles: string): Record<string, string> {
 
   if (!styles) return {};
 
-  return styles.split(';').reduce<Record<string, string>>((obj, str) => {
+  const obj: Record<string, string> = {};
+
+  let key: string | undefined;
+
+  for (const str of styles.split(';')) {
     const n = str.indexOf(':');
-    // Skip if there is no :, or if it is the first/last character
-    if (n < 1 || n === str.length - 1) return obj;
-    obj[str.slice(0, n).trim()] = str.slice(n + 1).trim();
-    return obj;
-  }, {});
+    // If there is no :, or if it is the first/last character, add to the previous item's value
+    if (n < 1 || n === str.length - 1) {
+      const trimmed = str.trimEnd();
+      if (trimmed.length > 0 && key !== undefined) {
+        obj[key] += `;${trimmed}`;
+      }
+    } else {
+      key = str.slice(0, n).trim();
+      obj[key] = str.slice(n + 1).trim();
+    }
+  }
+
+  return obj;
 }

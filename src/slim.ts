@@ -6,7 +6,8 @@ export type {
   CheerioOptions,
   HTMLParser2Options,
   Node,
-  NodeWithChildren,
+  AnyNode,
+  ParentNode,
   Element,
   Document,
 } from '.';
@@ -16,10 +17,10 @@ export type {
  *
  * @category Cheerio
  */
-export * from './types';
+export * from './types.js';
 
-import { getLoad } from './load';
-import { getParse } from './parse';
+import { getLoad } from './load.js';
+import { getParse } from './parse.js';
 import render from 'dom-serializer';
 import { parseDocument } from 'htmlparser2';
 

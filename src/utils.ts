@@ -1,5 +1,5 @@
-import { Node, cloneNode, Document } from 'domhandler';
-import type { Cheerio } from './cheerio';
+import { type AnyNode, cloneNode, Document } from 'domhandler';
+import type { Cheerio } from './cheerio.js';
 
 /**
  * Check if the DOM element is a tag.
@@ -8,7 +8,7 @@ import type { Cheerio } from './cheerio';
  *
  * @private
  * @category Utils
- * @param type - DOM node to check.
+ * @param type - The DOM node to check.
  * @returns Whether the node is a tag.
  */
 export { isTag } from 'domhandler';
@@ -29,7 +29,7 @@ export function isCheerio<T>(maybeCheerio: any): maybeCheerio is Cheerio<T> {
  *
  * @private
  * @category Utils
- * @param str - String to be converted.
+ * @param str - The string to be converted.
  * @returns String in camel case notation.
  */
 export function camelCase(str: string): string {
@@ -42,7 +42,7 @@ export function camelCase(str: string): string {
  *
  * @private
  * @category Utils
- * @param str - String to be converted.
+ * @param str - The string to be converted.
  * @returns String in "CSS case".
  */
 export function cssCase(str: string): string {
@@ -56,14 +56,14 @@ export function cssCase(str: string): string {
  * pressure introduced by _make.
  *
  * @category Utils
- * @param array - Array to iterate over.
+ * @param array - The array to iterate over.
  * @param fn - Function to call.
  * @returns The original instance.
  */
-export function domEach<T extends Node, Arr extends ArrayLike<T> = Cheerio<T>>(
-  array: Arr,
-  fn: (elem: T, index: number) => void
-): Arr {
+export function domEach<
+  T extends AnyNode,
+  Arr extends ArrayLike<T> = Cheerio<T>
+>(array: Arr, fn: (elem: T, index: number) => void): Arr {
   const len = array.length;
   for (let i = 0; i < len; i++) fn(array[i], i);
   return array;
@@ -75,10 +75,10 @@ export function domEach<T extends Node, Arr extends ArrayLike<T> = Cheerio<T>>(
  *
  * @private
  * @category Utils
- * @param dom - The htmlparser2-compliant DOM structure.
+ * @param dom - The domhandler-compliant DOM structure.
  * @returns - The cloned DOM.
  */
-export function cloneDom<T extends Node>(dom: T | T[]): T[] {
+export function cloneDom<T extends AnyNode>(dom: T | T[]): T[] {
   const clone =
     'length' in dom
       ? (Array.prototype.map.call(dom, (el) => cloneNode(el, true)) as T[])
@@ -93,6 +93,14 @@ export function cloneDom<T extends Node>(dom: T | T[]): T[] {
   return clone;
 }
 
+const enum CharacterCodes {
+  LowerA = 97,
+  LowerZ = 122,
+  UpperA = 65,
+  UpperZ = 90,
+  Exclamation = 33,
+}
+
 /**
  * Check if string is HTML.
  *
@@ -101,7 +109,7 @@ export function cloneDom<T extends Node>(dom: T | T[]): T[] {
  *
  * @private
  * @category Utils
- * @param str - String to check.
+ * @param str - The string to check.
  * @returns Indicates if `str` is HTML.
  */
 export function isHtml(str: string): boolean {
@@ -109,11 +117,12 @@ export function isHtml(str: string): boolean {
 
   if (tagStart < 0 || tagStart > str.length - 3) return false;
 
-  const tagChar = str.charAt(tagStart + 1);
+  const tagChar = str.charCodeAt(tagStart + 1);
 
   return (
-    ((tagChar >= 'a' && tagChar <= 'z') ||
-      (tagChar >= 'A' && tagChar <= 'Z')) &&
+    ((tagChar >= CharacterCodes.LowerA && tagChar <= CharacterCodes.LowerZ) ||
+      (tagChar >= CharacterCodes.UpperA && tagChar <= CharacterCodes.UpperZ) ||
+      tagChar === CharacterCodes.Exclamation) &&
     str.includes('>', tagStart + 2)
   );
 }

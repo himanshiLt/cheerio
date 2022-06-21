@@ -1,7 +1,7 @@
 import cheerio from '..';
-import type { Cheerio } from '../cheerio';
+import type { Cheerio } from '../cheerio.js';
 import type { Element } from 'domhandler';
-import { mixedText } from '../__fixtures__/fixtures';
+import { mixedText } from '../__fixtures__/fixtures.js';
 
 describe('$(...)', () => {
   describe('.css', () => {
@@ -122,6 +122,15 @@ describe('$(...)', () => {
           one: '0',
           two: '1',
         });
+      });
+
+      it('should add malformed values to previous field (#1134)', () => {
+        const el = cheerio(
+          '<button style="background-image: url(data:image/png;base64,iVBORw0KGgo)"></button>'
+        );
+        expect(el.css('background-image')).toStrictEqual(
+          'url(data:image/png;base64,iVBORw0KGgo)'
+        );
       });
     });
   });
